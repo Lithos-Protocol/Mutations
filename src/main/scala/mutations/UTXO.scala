@@ -18,10 +18,21 @@ case class UTXO(contract: Contract, value: Long,
   }
 
   def setValue(value: Long): UTXO = this.copy(value = value)
+  def subValue(amnt: Long):  UTXO = this.copy(value = value - amnt)
+  def addValue(amnt: Long):  UTXO = this.copy(value = value + amnt)
 
   def setContract(contract: Contract): UTXO = this.copy(contract = contract)
 
-  def addToken(token: Token): UTXO = setTokens(tokens ++ Seq(token) :_* )
+  def addToken(token: Token): UTXO = {
+    val tokenIdx = tokens.indexWhere(t => t.id.toString == token.id.toString)
+    val optToken: Option[Token] = if(tokenIdx != -1) Some(tokens(tokenIdx)) else None
+    optToken match {
+      case Some(value) =>
+        setTokens(tokens.patch(tokenIdx, Seq(value + token.amount), 1): _*)
+      case None =>
+        addToken(token)
+    }
+  }
 
   def removeToken(token: Token): UTXO = {
     val tokenIdx = tokens.indexWhere(t => t.id.toString == token.id.toString)

@@ -17,7 +17,7 @@ case class Contract(ergoTree: ErgoTree, mutators: Seq[Mutator] = Seq.empty[Mutat
   def mainnetAddress: Address = Address.fromErgoTree(ergoTree, NetworkType.MAINNET)
   def testnetAddress: Address = Address.fromErgoTree(ergoTree, NetworkType.TESTNET)
 
-  def address(ctx: BlockchainContext): Address = Address.fromErgoTree(ergoTree, ctx.getNetworkType)
+  def address(networkType: NetworkType): Address = Address.fromErgoTree(ergoTree, networkType)
 
   override def toString: String = Hex.toHexString(hashedPropBytes)
 }

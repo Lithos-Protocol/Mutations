@@ -1,8 +1,9 @@
 package work.lithos
 
+import mutations._
+
 import org.ergoplatform.appkit._
 import org.scalatest.funsuite.AnyFunSuite
-import work.lithos.mutations.{Contract, StdMutators, TxBuilder, UTXO}
 
 class MutatorTest extends AnyFunSuite{
 
@@ -53,22 +54,35 @@ class MutatorTest extends AnyFunSuite{
 
         val txBuilder = TxBuilder(ctx)
         val prover = ctx.newProverBuilder().withDLogSecret(BigInt(0).bigInteger).build()
-        val input = UTXO(
+        val utxo = UTXO(
           sigmaTrue,
-          Parameters.OneErg * 5
-        ).toDummyInput(ctx).withMutator{
-          tCtx =>
-            tCtx.addOutputs(UTXO(sigmaTrue, (Parameters.OneErg * 5) - Parameters.MinFee))
+          Parameters.OneErg * 5,
+          tokens = Seq(Token("6e6547eb720ac46703d20a2903fc588c9a7079d2f32897b6f222cf443c5cdac7", 100))
+        )
+
+        val mutator: Mutator = {
+          (tCtx: TxContext) =>
+            tCtx.addOutputs(tCtx.inputs.head.toUTXO
+              .removeToken(Token("6e6547eb720ac46703d20a2903fc588c9a7079d2f32897b6f222cf443c5cdac7", 50))
+              .subValue(Parameters.MinFee)
+            )
         }
+            val input = utxo.toDummyInput(ctx).withMutator{
+              mutator
+            }
 
-        val uTx = txBuilder
-          .setInputs(input)
-          .mutateOutputs
-          .buildTx(Parameters.MinFee, Address.create("9fAMzWJa91Bdgh4a9zaHbdhjmeCsJSFCb75HFnTWV7gfTF6kDEs"))
-        val sTx = prover.sign(uTx)
+            val uTx = txBuilder
+              .setInputs(input)
+              .mutateOutputs
+              .buildTx(
+                Parameters.MinFee,
+                Address.create("9fAMzWJa91Bdgh4a9zaHbdhjmeCsJSFCb75HFnTWV7gfTF6kDEs"),
+                Seq(Token("6e6547eb720ac46703d20a2903fc588c9a7079d2f32897b6f222cf443c5cdac7", 50))
+              )
+            val sTx = prover.sign(uTx)
 
-        println(sTx.toJson(true))
+            println(sTx.toJson(true))
+        }
     }
   }
 
-}
